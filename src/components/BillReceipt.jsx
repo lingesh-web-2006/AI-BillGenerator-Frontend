@@ -150,7 +150,7 @@ export default function BillReceipt({ bill, company, onClose }) {
               {company?.email}
             </div>
             <div style={{ fontSize: "0.65rem", color: "#475569", marginTop: 4, fontFamily: "var(--font-mono)" }}>
-              GSTIN: {company?.gst_number || "27AABCU9603R1ZM"} &nbsp;|&nbsp; PAN: {company?.pan_number || "AABCU9603R"} &nbsp;|&nbsp; State: {company?.state || "Maharashtra (27)"}
+              GSTIN: {company?.gst_number || "27AABCU9603R1ZM"} &nbsp;|&nbsp; PAN: {company?.pan_number || "AABCU9603R"} &nbsp;|&nbsp; State: {company?.state || "Tamil Nadu (TN)"}
             </div>
           </div>
 
