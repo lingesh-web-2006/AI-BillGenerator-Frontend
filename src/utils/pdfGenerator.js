@@ -21,74 +21,110 @@ export function generateBillPDF(bill, company) {
 function renderModernTemplate(doc, bill, company) {
   const pageW = doc.internal.pageSize.getWidth();
   const margin = 20;
+  let y = 30;
 
-  // ── Header ──
-  doc.setFillColor(17, 19, 24);
-  doc.rect(0, 0, pageW, 55, "F");
-
-  // Logo
+  // ── Top Left: Logo / Invoice Title ──
   if (company?.logo_url) {
-    try { doc.addImage(company.logo_url, "PNG", margin, 12, 12, 12); } catch(e) {}
+    try { doc.addImage(company.logo_url, "PNG", margin, 18, 14, 14); } catch(e) {}
   }
-
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.setTextColor(79, 142, 247);
-  doc.text(company?.name?.toUpperCase() || "COMPANY NAME", margin + (company?.logo_url ? 16 : 0), 22);
+  doc.setFontSize(26);
+  doc.setTextColor(30, 41, 59);
+  doc.text("INVOICE", margin + (company?.logo_url ? 18 : 0), 28);
 
-  doc.setFontSize(8);
-  doc.setTextColor(140, 146, 170);
-  doc.setFont("helvetica", "normal");
-  doc.text(company?.address || "Company Address", margin, 32);
-  doc.text(`GST: ${company?.gst_number || "N/A"} | PH: ${company?.phone || "N/A"}`, margin, 37);
-
-  doc.setFontSize(9);
-  doc.setTextColor(200, 210, 230);
-  doc.text(`Invoice #${bill.id || "N/A"}`, pageW - margin, 18, { align: "right" });
-  doc.text(`Date: ${bill.bill_date}`, pageW - margin, 25, { align: "right" });
-  doc.text(`Emp ID: ${bill.employee_id}`, pageW - margin, 32, { align: "right" });
-
-  // ── Content ──
-  let y = 68;
+  // ── Top Right: Company Info ──
   doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(40, 45, 60);
-  doc.text("EMPLOYEE DETAILS", margin, y);
-  
-  y += 6;
+  doc.setTextColor(51, 65, 85);
+  doc.text(company?.name?.toUpperCase() || "COMPANY NAME", pageW - margin, 24, { align: "right" });
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(80, 85, 100);
-  doc.text(`${bill.employee_name} (${bill.designation})`, margin, y);
-  doc.text(`Email: ${bill.email}`, margin, y + 5);
+  doc.setFontSize(8.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text(company?.address || "Address Line 1, City, State", pageW - margin, 29, { align: "right" });
+  doc.text(`${company?.phone || "Phone Number"} | GST: ${company?.gst_number || "N/A"}`, pageW - margin, 34, { align: "right" });
 
-  y += 15;
+  // ── Divider ──
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.5);
+  doc.line(margin, 42, pageW - margin, 42);
+
+  // ── Billing Details ──
+  y = 55;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text("BILLED TO", margin, y);
+  doc.text("DETAILS", pageW - margin - 45, y);
+
+  y += 6;
+  doc.setFontSize(11);
+  doc.setTextColor(15, 23, 42);
+  doc.text(bill.employee_name || "Employee Name", margin, y);
+  
+  doc.setFontSize(9);
+  doc.setTextColor(15, 23, 42);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Invoice Number:`, pageW - margin - 45, y);
+  doc.setFont("helvetica", "bold");
+  doc.text(`INV-${bill.id || "001"}`, pageW - margin, y, { align: "right" });
+
+  y += 5;
+  doc.setFontSize(9);
+  doc.setTextColor(71, 85, 105);
+  doc.setFont("helvetica", "normal");
+  doc.text(bill.designation || "Designation", margin, y);
+  doc.text(`Billing Date:`, pageW - margin - 45, y);
+  doc.text(`${bill.bill_date || "Date"}`, pageW - margin, y, { align: "right" });
+
+  y += 5;
+  doc.text(`PAN: ${bill.pan_number || "N/A"}`, margin, y);
+  doc.text(`Due Date:`, pageW - margin - 45, y);
+  doc.text(`${bill.bill_date || "Date"}`, pageW - margin, y, { align: "right" });
+
+  // ── Table ──
+  y += 18;
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
-    head: [["Description", "Details", "Amount (₹)"]],
+    head: [["DESCRIPTION", "RATE (PER DAY)", "QUANTITY (DAYS)", "AMOUNT"]],
     body: [
-      ["Basic Salary", `${bill.working_days} Days`, `₹ ${bill.monthly_salary?.toFixed(2)}`],
-      ["Attendance", `${bill.present_days} Present / ${bill.absent_days} Absent`, ""],
-      ["Deduction", `Per Day: ₹${(bill.monthly_salary / bill.working_days).toFixed(2)}`, `- ₹ ${bill.deduction?.toFixed(2)}`],
+      ["Professional Salary Fees", `₹ ${((bill.monthly_salary || 0) / (bill.working_days || 30)).toFixed(2)}`, `${bill.present_days || 0}`, `₹ ${(bill.monthly_salary || 0).toFixed(2)}`],
+      ["Deductions (Absents / LWP)", `₹ ${((bill.monthly_salary || 0) / (bill.working_days || 30)).toFixed(2)}`, `(${bill.absent_days || 0})`, `- ₹ ${(bill.deduction || 0).toFixed(2)}`],
     ],
-    styles: { fontSize: 9, cellPadding: 4 },
-    headStyles: { fillColor: [17, 19, 24], textColor: [255, 255, 255] },
-    theme: "striped"
+    styles: { fontSize: 8.5, cellPadding: 5, textColor: [30, 41, 59], font: "helvetica" },
+    headStyles: { fillColor: [248, 250, 252], textColor: [71, 85, 105], fontStyle: "bold", cellPadding: 6 },
+    theme: "striped",
   });
 
-  y = doc.lastAutoTable.finalY + 10;
-  doc.setFillColor(79, 142, 247);
-  doc.rect(pageW - margin - 60, y, 60, 12, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.text("TOTAL PAYABLE", pageW - margin - 56, y + 7.5);
-  doc.text(`₹ ${bill.net_amount?.toFixed(2)}`, pageW - margin - 4, y + 7.5, { align: "right" });
+  // ── Summary ──
+  y = doc.lastAutoTable.finalY + 12;
+  const summaryX = pageW - margin - 65;
+  
+  doc.setFontSize(9);
+  doc.setTextColor(100, 116, 139);
+  doc.setFont("helvetica", "normal");
+  doc.text("Subtotal", summaryX, y);
+  doc.text(`₹ ${(bill.monthly_salary || 0).toFixed(2)}`, pageW - margin, y, { align: "right" });
 
-  const footerY = doc.internal.pageSize.getHeight() - 20;
+  y += 6;
+  doc.text(`Deductions (${bill.absent_days || 0} days)`, summaryX, y);
+  doc.text(`- ₹ ${(bill.deduction || 0).toFixed(2)}`, pageW - margin, y, { align: "right" });
+
+  y += 8;
+  doc.setDrawColor(226, 232, 240);
+  doc.line(summaryX, y - 4, pageW - margin, y - 4);
+  
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(79, 70, 229); // Modern indigo
+  doc.text("Total Amount", summaryX, y + 2);
+  doc.text(`₹ ${(bill.net_amount || 0).toFixed(2)}`, pageW - margin, y + 2, { align: "right" });
+
+  // ── Footer ──
+  const footerY = doc.internal.pageSize.getHeight() - 15;
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
-  doc.text("Modern Template Generated by BillFlow AI.", margin, footerY);
+  doc.setFont("helvetica", "normal");
+  doc.text("Formal record generated by BillFlow AI Assistant.", margin, footerY);
 }
 
 function renderProfessionalTemplate(doc, bill, company) {

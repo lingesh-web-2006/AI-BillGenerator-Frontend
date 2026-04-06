@@ -1,72 +1,57 @@
 /**
- * VoicePanel.jsx — Voice recording + AI bill generation via Claude
+ * VoicePanel.jsx — Conversational AI Assistant for Payroll & Billing
  */
 
 import React, { useState, useEffect, useRef } from "react";
-import { Mic, MicOff, Send, RefreshCw } from "lucide-react";
+import { 
+  Bot, Mic, MicOff, Send, RotateCcw, Sparkles, 
+  CheckCircle, Plus, Building2, TrendingUp, AlertCircle
+} from "lucide-react";
 import { useVoice } from "../hooks/useVoice";
 import { api } from "../utils/api";
 import BillReceipt from "./BillReceipt";
 import EmployeeTable from "./EmployeeTable";
 import AddEmployeeModal from "./AddEmployeeModal";
-import { Plus } from "lucide-react";
 
 export default function VoicePanel({ employees, loading, selectedCompany, onBillGenerated, onEmployeeAdded }) {
-  const { listening, transcript, error, supported, startListening, stopListening, clearTranscript } =
+  const { listening, transcript, error: voiceError, supported, startListening, stopListening, clearTranscript } =
     useVoice();
 
   const [manualText, setManualText] = useState("");
   const [processing,  setProcessing]  = useState(false);
   const [result,      setResult]      = useState(null);
-  const [apiError,    setApiError]    = useState(null);
+  const [error,       setError]       = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // Sync voice transcript to manualText for editing
+  // Sync voice transcript to manualText
   useEffect(() => {
     if (transcript) setManualText(transcript);
   }, [transcript]);
-
-  // Auto-submit command when user stops speaking
-  const prevListening = useRef(false);
-  useEffect(() => {
-    if (prevListening.current && !listening && manualText.trim()) {
-      handleProcess();
-    }
-    prevListening.current = listening;
-  }, [listening, manualText]);
-
-  const handleMicClick = () => {
-    if (listening) stopListening();
-    else startListening();
-  };
-
-  const handleDeleteEmployee = async (id) => {
-    try {
-      await api.employees.remove(id);
-      onEmployeeAdded?.();
-    } catch (err) {
-      setApiError(err.message || "Failed to delete employee");
-    }
-  };
 
   const handleProcess = async () => {
     const text = manualText.trim();
     if (!text) return;
 
     setProcessing(true);
-    setApiError(null);
+    setError(null);
     setResult(null);
 
     try {
-      // Pass company_id so AI filters to this company's employees
       const data = await api.voice.process({ 
         text, 
         company_id: selectedCompany?.id 
       });
       setResult(data);
-      onBillGenerated?.();
-    } catch (err) {
-      setApiError(err.message || "Failed to process command");
+      if (data.type === "bill" || data.type === "bulk") {
+        onBillGenerated();
+      }
+    } catch (e) {
+      console.error("Voice process error:", e);
+      setError(e.message || "I encountered an unexpected issue while processing your request.");
+      // Attempt to extract the conversational message if available
+      if (e.response?.data?.message) {
+        setError(e.response.data.message);
+      }
     } finally {
       setProcessing(false);
     }
@@ -76,36 +61,175 @@ export default function VoicePanel({ employees, loading, selectedCompany, onBill
     clearTranscript();
     setManualText("");
     setResult(null);
-    setApiError(null);
+    setError(null);
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between" style={{ marginBottom: "16px" }}>
+    <div className="voice-panel-content page-fade">
+      {/* Page Header */}
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <div className="section-heading">Employees</div>
-          <div className="section-sub" style={{ margin: 0 }}>Reference: {selectedCompany?.name} Roster</div>
+          <h1 className="section-heading">Voice Assistant</h1>
+          <p className="section-sub" style={{ margin: 0 }}>Natural language payroll management for {selectedCompany?.name}</p>
         </div>
-        <button 
-          className="btn btn-primary" 
-          onClick={() => setShowAddModal(true)}
-          style={{ padding: "8px 16px" }}
-        >
-          <Plus size={16} />
-          Add Employee
+        <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+          <Plus size={16} /> Add Employee
         </button>
       </div>
 
-      <div className="card" style={{ marginBottom: "20px" }}>
-        <EmployeeTable 
-          employees={employees} 
-          loading={loading} 
-          onGenerateBill={(emp) => {
-            setManualText(`Generate ${emp.name} bill`);
-            document.getElementById("voice-generator")?.scrollIntoView({ behavior: "smooth" });
-          }}
-          onDeleteEmployee={handleDeleteEmployee}
-        />
+      <div className="grid grid-2 gap-8">
+        {/* Left Column: Recording & Input */}
+        <div className="flex flex-col gap-6">
+          <section className="voice-panel card shadow-lg">
+            <div className="mic-area">
+              <button 
+                className={`mic-ring ${listening ? "listening" : ""}`}
+                onClick={listening ? stopListening : startListening}
+              >
+                {listening ? <MicOff size={32} color="#fff" /> : <Mic size={32} color="var(--accent)" />}
+              </button>
+              <p className="voice-status">
+                {listening ? "Processing speech..." : "Click to speak command"}
+              </p>
+            </div>
+
+            <div className="form-group mb-6">
+              <label className="input-label">Your Command</label>
+              <textarea
+                className="input"
+                rows={3}
+                placeholder="e.g. Generate bill for Arun Kumar with 2000 bonus..."
+                value={manualText}
+                onChange={(e) => setManualText(e.target.value)}
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button 
+                className="btn btn-primary w-full" 
+                onClick={handleProcess}
+                disabled={processing || !manualText.trim()}
+              >
+                {processing ? (
+                  <> <span className="spinner mr-2" /> Thinking... </>
+                ) : (
+                  <> <Send size={16} /> Process Command </>
+                )}
+              </button>
+              <button className="btn btn-ghost" onClick={handleReset}>
+                <RotateCcw size={16} />
+              </button>
+            </div>
+
+            <div className="example-commands mt-8">
+              <p className="text-xs font-bold text-muted uppercase mb-4 letter-spacing-lg">Example Commands</p>
+              <ul className="text-sm space-y-3 text-secondary">
+                <li className="cursor-pointer hover:text-accent transition-colors" onClick={() => setManualText("Generate bill for Arun Kumar")}>
+                  ▸ Generate Arun bill with 2000 bonus
+                </li>
+                <li className="cursor-pointer hover:text-accent transition-colors" onClick={() => setManualText("Generate salary for everyone this month")}>
+                  ▸ Generate salary for everyone this month
+                </li>
+                <li className="cursor-pointer hover:text-accent transition-colors" onClick={() => setManualText("Who has the highest salary?")}>
+                  ▸ Who has the highest salary?
+                </li>
+                <li className="cursor-pointer hover:text-accent transition-colors" onClick={() => setManualText("List employees with more than 3 absents")}>
+                  ▸ List employees with more than 3 absents
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          {/* Employee Roster Reference */}
+          <section className="card">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="card-title" style={{ fontSize: '0.9rem' }}>Company Roster</h3>
+              <Building2 size={14} className="text-muted" />
+            </div>
+            <EmployeeTable 
+              employees={employees} 
+              loading={loading} 
+              compact
+              onGenerateBill={(emp) => setManualText(`Generate ${emp.name} bill`)}
+            />
+          </section>
+        </div>
+
+        {/* Right Column: AI Assistant Response */}
+        <div className="ai-response-column">
+          {(processing || result || error) ? (
+            <div className="ai-chat-bubble card animate-slide-up">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="assistant-avatar">
+                  <Bot size={18} />
+                </div>
+                <span className="font-bold text-sm text-accent">Assistant Response</span>
+              </div>
+
+              {processing ? (
+                <div className="typing-indicator flex gap-1 p-4">
+                  <span></span><span></span><span></span>
+                </div>
+              ) : (
+                <div className="ai-message text-display" style={{ fontSize: "1.05rem", lineHeight: "1.6" }}>
+                  {result?.message || error}
+                </div>
+              )}
+
+              {result && !processing && (
+                <div className="mt-8 border-top pt-8 border-brand">
+                  {result.type === "bill" && (
+                    <div className="animate-fade-in">
+                      <div className="flex items-center gap-2 mb-4 text-xs font-bold text-success uppercase">
+                        <TrendingUp size={14} />
+                        Invoice Generated
+                      </div>
+                      <BillReceipt bill={result} company={selectedCompany} hideActions />
+                    </div>
+                  )}
+                  {result.type === "bulk" && (
+                    <div className="alert alert-success animate-fade-in">
+                      <CheckCircle size={18} />
+                      Processed {result.count} payroll records successfully.
+                    </div>
+                  )}
+                  {result.type === "list" && (
+                    <div className="animate-fade-in">
+                      <h4 className="text-xs font-bold text-muted uppercase mb-4">Query Results</h4>
+                      <EmployeeTable employees={result.data} compact />
+                    </div>
+                  )}
+                  {result.type === "stat" && (
+                    <div className="card shadow-md animate-fade-in" style={{ border: '1px solid var(--accent-dim)' }}>
+                       {result.data?.name ? (
+                         <div className="flex items-center gap-4">
+                            <div className="avatar">{result.data.name[0]}</div>
+                            <div>
+                               <div className="font-bold">{result.data.name}</div>
+                               <div className="text-accent text-sm">₹{result.data.monthly_salary?.toLocaleString()} / mo</div>
+                            </div>
+                         </div>
+                       ) : (
+                         <div className="text-center py-4">
+                            <div className="text-2xl font-bold text-success">₹{result.data?.total?.toLocaleString()}</div>
+                            <div className="text-xs text-muted mt-1 uppercase font-bold">Total Payout for {result.data?.month || 'Period'}</div>
+                         </div>
+                       )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="empty-chat card flex flex-col items-center justify-center p-12 text-center h-full opacity-60">
+              <Sparkles size={48} className="text-muted mb-6 opacity-20" />
+              <h3 className="text-muted font-bold">Assistant Offline</h3>
+              <p className="text-sm text-muted mt-3 max-w-xs mx-auto">
+                State your payroll requirement to the assistant. It can generate bills, query statistics, or search for employees.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {showAddModal && (
@@ -118,242 +242,6 @@ export default function VoicePanel({ employees, loading, selectedCompany, onBill
           }}
         />
       )}
-
-      <div style={{ textAlign: "center", marginBottom: "40px" }} className="fade-in">
-        <button 
-          className="btn btn-ghost"
-          style={{ 
-            borderRadius: "99px", padding: "8px 24px", fontSize: "0.82rem", 
-            color: "var(--accent)", borderColor: "var(--accent-dim)", background: "rgba(79, 142, 247, 0.08)",
-            boxShadow: "0 0 12px rgba(79, 142, 247, 0.15)"
-          }}
-          onClick={() => document.getElementById("voice-generator")?.scrollIntoView({ behavior: "smooth" })}
-        >
-          Scroll down for Voice AI Generator ↓
-        </button>
-      </div>
-
-      <div className="section-heading" id="voice-generator">Voice Bill Generator</div>
-      <div className="section-sub">
-        Speak or type a command like <em style={{ color: "var(--accent)" }}>"Generate Arun bill"</em> — Claude AI will parse it and generate the bill automatically.
-      </div>
-
-      <div className="grid-2">
-        {/* Voice Input Panel */}
-        <div className="voice-panel">
-          {/* Mic button */}
-          <div
-            className={`mic-ring ${listening ? "listening" : ""}`}
-            onClick={handleMicClick}
-            title={listening ? "Stop Recording" : "Start Recording"}
-          >
-            {listening
-              ? <MicOff size={28} color="var(--accent)" />
-              : <Mic    size={28} color="var(--text-secondary)" />}
-          </div>
-
-          <div className={`voice-status ${listening ? "active" : ""}`}>
-            {listening ? "● Listening… speak now" : "Click mic to start recording"}
-          </div>
-
-          {/* Transcript / manual input */}
-          <div className="input-group" style={{ textAlign: "left" }}>
-            <label className="input-label">Command Text</label>
-            <textarea
-              className="input"
-              rows={3}
-              placeholder='e.g. "Generate Arun bill" or "Create salary slip for Priya"'
-              value={manualText}
-              onChange={(e) => setManualText(e.target.value)}
-              style={{ resize: "vertical", fontFamily: "var(--font-mono)" }}
-            />
-          </div>
-
-          {!supported && (
-            <div className="alert alert-info" style={{ marginBottom: 12, textAlign: "left" }}>
-              Browser doesn't support speech recognition. Type your command manually.
-            </div>
-          )}
-
-          {(error) && (
-            <div className="alert alert-error" style={{ marginBottom: 12, textAlign: "left" }}>
-              {error}
-            </div>
-          )}
-
-          <div className="flex gap-3" style={{ justifyContent: "center" }}>
-            <button
-              className="btn btn-primary btn-lg"
-              onClick={handleProcess}
-              disabled={processing || !manualText.trim()}
-            >
-              {processing
-                ? <><div className="spinner" /> Processing…</>
-                : <><Send size={15} /> Process Command</>
-              }
-            </button>
-            <button className="btn btn-ghost" onClick={handleReset}>
-              <RefreshCw size={14} /> Reset
-            </button>
-          </div>
-
-          {/* Example commands */}
-          <div style={{ marginTop: 20, textAlign: "left" }}>
-            <div className="input-label" style={{ marginBottom: 8 }}>Example Commands</div>
-            {[
-              "Generate Arun bill with 2000 bonus",
-              "Generate salary for everyone this month",
-              "Who has the highest salary?",
-              "List employees with more than 3 absents",
-              "Total salary paid in March 2026",
-              "Show employee with lowest attendance",
-            ].map((cmd) => (
-              <div
-                key={cmd}
-                onClick={() => setManualText(cmd)}
-                style={{
-                  fontSize: "0.78rem",
-                  color: "var(--text-secondary)",
-                  fontFamily: "var(--font-mono)",
-                  padding: "5px 0",
-                  cursor: "pointer",
-                  borderBottom: "1px solid var(--border)",
-                }}
-                onMouseEnter={(e) => e.target.style.color = "var(--accent)"}
-                onMouseLeave={(e) => e.target.style.color = "var(--text-secondary)"}
-              >
-                ▸ {cmd}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Result Panel */}
-        <div id="voice-result">
-          {apiError && (
-            <div className="alert alert-error fade-in" style={{ marginBottom: 16 }}>
-              <strong>Error:</strong> {apiError}
-            </div>
-          )}
-
-          {result && (
-            <div className="fade-in">
-              {/* Parsed command info */}
-              <div className="card mb-4" style={{ marginBottom: 16 }}>
-                <div className="card-title" style={{ marginBottom: 12, fontSize: '0.8rem', opacity: 0.7 }}>
-                  AI Status: <span style={{ color: 'var(--success)' }}>{result.type?.toUpperCase()}</span>
-                </div>
-                {result.parsed_command && (
-                  <pre style={{
-                    background: "var(--bg-elevated)",
-                    borderRadius: "var(--radius-sm)",
-                    padding: "12px",
-                    fontSize: "0.72rem",
-                    color: "var(--text-secondary)",
-                    fontFamily: "var(--font-mono)",
-                    overflowX: "auto",
-                    margin: 0
-                  }}>
-                    {JSON.stringify(result.parsed_command, null, 2)}
-                  </pre>
-                )}
-              </div>
-
-              {/* Dynamic Result Rendering */}
-              {result.type === "bill" && (
-                <BillReceipt bill={result} company={selectedCompany} onClose={handleReset} />
-              )}
-
-              {result.type === "bulk" && (
-                <div className="card text-center" style={{ padding: '40px 20px' }}>
-                  <div style={{ fontSize: '3rem', marginBottom: 16 }}>✅</div>
-                  <div className="card-title">{result.message}</div>
-                  <div className="td-secondary" style={{ marginTop: 8 }}>
-                    Reload the dashboard or history to see all generated records.
-                  </div>
-                  <button className="btn btn-ghost mt-4" onClick={handleReset} style={{ marginTop: 20 }}>
-                    Clear Result
-                  </button>
-                </div>
-              )}
-
-              {result.type === "list" && (
-                <div className="card">
-                  <div className="card-header">
-                    <div className="card-title">Found {result.data?.length} Employees</div>
-                  </div>
-                  <div className="table-wrap">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Name</th>
-                          <th>Designation</th>
-                          <th>Attendance</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {result.data?.map(emp => (
-                          <tr key={emp.id}>
-                            <td style={{ fontWeight: 500 }}>{emp.name}</td>
-                            <td className="td-secondary">{emp.designation}</td>
-                            <td><span className="badge badge-amber">{emp.attendance_absent} absents</span></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {result.type === "stat" && (
-                <div className="card" style={{ padding: 24, border: '2px dashed var(--accent-dim)' }}>
-                  <div className="stat-label" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {result.action?.replace(/_/g, ' ')}
-                  </div>
-                  {result.data?.name ? (
-                    <div style={{ marginTop: 12 }}>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 600 }}>{result.data.name}</div>
-                      <div className="text-accent" style={{ fontSize: '1.1rem', marginTop: 4 }}>
-                        ₹{result.data.monthly_salary?.toLocaleString()} / month
-                      </div>
-                      <div className="td-secondary" style={{ marginTop: 4 }}>{result.data.designation}</div>
-                    </div>
-                  ) : (
-                    <div style={{ marginTop: 12 }}>
-                      <div style={{ fontSize: '2rem', fontWeight: 700 }} className="text-success">
-                        ₹{result.data?.total?.toLocaleString()}
-                      </div>
-                      <div className="td-secondary">Total for {result.data?.month || 'selected period'}</div>
-                    </div>
-                  )}
-                  <button className="btn btn-ghost btn-sm" onClick={handleReset} style={{ marginTop: 20 }}>
-                    Done
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {!result && !apiError && (
-            <div style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
-              minHeight: 300,
-              color: "var(--text-muted)",
-              fontSize: "0.875rem",
-            }}>
-              <div style={{ fontSize: "2.5rem", marginBottom: 12 }}>🎙</div>
-              <div>Bill result will appear here</div>
-              <div className="text-sm" style={{ marginTop: 4 }}>
-                Speak or type a command and click Process
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

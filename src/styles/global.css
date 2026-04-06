@@ -934,18 +934,95 @@ tbody td {
   outline: none;
 }
 
-/* ── Layout Overrides ── */
-.page-header {
+/* ── Conversational AI UI ── */
+.voice-panel-container {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mic-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   margin-bottom: 32px;
 }
 
-.text-display {
-  font-family: var(--font-display);
+.mic-ring {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 4px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  box-shadow: var(--shadow-md);
 }
 
-.text-error {
-  color: var(--danger);
+.mic-ring:hover {
+  transform: scale(1.05);
+  border-color: var(--accent-light);
+  box-shadow: var(--shadow-accent);
 }
+
+.mic-ring.listening {
+  background: var(--accent);
+  border-color: var(--accent-glow);
+  box-shadow: 0 0 0 10px var(--accent-dim), var(--shadow-accent);
+  animation: mic-pulse 2s infinite;
+}
+
+@keyframes mic-pulse {
+  0% { box-shadow: 0 0 0 0 var(--accent-dim), var(--shadow-accent); }
+  70% { box-shadow: 0 0 0 20px rgba(99, 102, 241, 0), var(--shadow-accent); }
+  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0), var(--shadow-accent); }
+}
+
+.ai-chat-bubble {
+  border-left: 4px solid var(--accent);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.assistant-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--accent-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+.typing-indicator span {
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: inline-block;
+  opacity: 0.3;
+  animation: typing 1s infinite alternate;
+}
+
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing {
+  from { transform: translateY(0); opacity: 0.3; }
+  to { transform: translateY(-6px); opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in { animation: fadeIn 0.5s ease forwards; }
+.animate-slide-up { animation: slideUp 0.4s ease forwards; }
+
+.border-brand { border-color: var(--border-light) !important; }
+.letter-spacing-lg { letter-spacing: 0.1em; }
