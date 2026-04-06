@@ -5,139 +5,140 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-export function generateBillPDF(bill) {
+export function generateBillPDF(bill, company) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const template = company?.template_name || "Modern";
 
+  if (template === "Professional") {
+    renderProfessionalTemplate(doc, bill, company);
+  } else {
+    renderModernTemplate(doc, bill, company);
+  }
+
+  doc.save(`Invoice_${company?.name?.replace(/\s+/g, "_")}_${bill.employee_name?.replace(/\s+/g, "_")}.pdf`);
+}
+
+function renderModernTemplate(doc, bill, company) {
   const pageW = doc.internal.pageSize.getWidth();
   const margin = 20;
 
   // ── Header ──
   doc.setFillColor(17, 19, 24);
-  doc.rect(0, 0, pageW, 50, "F");
+  doc.rect(0, 0, pageW, 55, "F");
+
+  // Logo
+  if (company?.logo_url) {
+    try { doc.addImage(company.logo_url, "PNG", margin, 12, 12, 12); } catch(e) {}
+  }
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(22);
+  doc.setFontSize(18);
   doc.setTextColor(79, 142, 247);
-  doc.text("EMPLOYEE BILLING SYSTEM", margin, 22);
+  doc.text(company?.name?.toUpperCase() || "COMPANY NAME", margin + (company?.logo_url ? 16 : 0), 22);
 
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.setTextColor(140, 146, 170);
-  doc.text("Payslip / Salary Statement", margin, 30);
+  doc.setFont("helvetica", "normal");
+  doc.text(company?.address || "Company Address", margin, 32);
+  doc.text(`GST: ${company?.gst_number || "N/A"} | PH: ${company?.phone || "N/A"}`, margin, 37);
 
   doc.setFontSize(9);
   doc.setTextColor(200, 210, 230);
-  doc.text(`Bill ID: #${bill.bill_id || "N/A"}`, pageW - margin, 18, { align: "right" });
+  doc.text(`Invoice #${bill.id || "N/A"}`, pageW - margin, 18, { align: "right" });
   doc.text(`Date: ${bill.bill_date}`, pageW - margin, 25, { align: "right" });
-  doc.text(`Generated: ${new Date(bill.generated_at).toLocaleString()}`, pageW - margin, 32, { align: "right" });
+  doc.text(`Emp ID: ${bill.employee_id}`, pageW - margin, 32, { align: "right" });
 
-  // ── Employee Info ──
-  let y = 62;
-  doc.setFontSize(11);
+  // ── Content ──
+  let y = 68;
+  doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(232, 236, 244);
-  doc.text("Employee Details", margin, y);
-
-  y += 8;
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(136, 146, 170);
-
-  const details = [
-    ["Name",         bill.employee_name],
-    ["Designation",  bill.designation || "—"],
-    ["Email",        bill.email || "—"],
-  ];
-  details.forEach(([label, value]) => {
-    doc.text(label + ":", margin, y);
-    doc.setTextColor(232, 236, 244);
-    doc.text(value, margin + 32, y);
-    doc.setTextColor(136, 146, 170);
-    y += 7;
-  });
-
-  // ── Attendance Summary ──
-  y += 4;
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(232, 236, 244);
-  doc.text("Attendance Summary", margin, y);
-  y += 8;
-
-  autoTable(doc, {
-    startY: y,
-    margin: { left: margin, right: margin },
-    head: [["Working Days", "Days Present", "Days Absent", "Attendance %"]],
-    body: [[
-      bill.working_days,
-      bill.present_days,
-      bill.absent_days,
-      `${((bill.present_days / bill.working_days) * 100).toFixed(1)}%`,
-    ]],
-    styles: { fontSize: 9, textColor: [232, 236, 244], fillColor: [24, 28, 36] },
-    headStyles: { fillColor: [30, 34, 46], textColor: [140, 146, 170], fontStyle: "bold", fontSize: 8 },
-    alternateRowStyles: { fillColor: [20, 24, 32] },
-    theme: "grid",
-  });
-
-  // ── Salary Breakdown ──
-  y = doc.lastAutoTable.finalY + 12;
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(232, 236, 244);
-  doc.text("Salary Breakdown", margin, y);
-  y += 8;
-
-  autoTable(doc, {
-    startY: y,
-    margin: { left: margin, right: margin },
-    head: [["Description", "Amount (₹)"]],
-    body: [
-      ["Monthly Gross Salary",               `₹ ${bill.monthly_salary?.toFixed(2)}`],
-      [`Per Day Rate (÷${bill.working_days})`, `₹ ${bill.per_day_salary?.toFixed(2)}`],
-      [`Absent Deduction (${bill.absent_days} days)`, `- ₹ ${bill.deduction?.toFixed(2)}`],
-    ],
-    styles: { fontSize: 9, textColor: [232, 236, 244], fillColor: [24, 28, 36] },
-    headStyles: { fillColor: [30, 34, 46], textColor: [140, 146, 170], fontStyle: "bold", fontSize: 8 },
-    alternateRowStyles: { fillColor: [20, 24, 32] },
-    theme: "grid",
-  });
-
-  // ── Net Payable & Status ──
-  y = doc.lastAutoTable.finalY + 6;
-  doc.setFillColor(30, 58, 110);
-  doc.roundedRect(margin, y, pageW - margin * 2, 18, 3, 3, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(79, 142, 247);
-  doc.text("NET PAYABLE AMOUNT", margin + 6, y + 11);
+  doc.setTextColor(40, 45, 60);
+  doc.text("EMPLOYEE DETAILS", margin, y);
   
-  // PAID Status Badge in PDF
-  doc.setFillColor(16, 185, 129); // Success Green
-  doc.roundedRect(margin + 62, y + 6, 20, 6, 1, 1, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(8);
-  doc.text("PAID", margin + 72, y + 10.5, { align: "center" });
-
-  doc.setTextColor(79, 142, 247);
-  doc.setFontSize(14);
-  doc.text(`₹ ${bill.net_amount?.toFixed(2) || bill.amount?.toFixed(2)}`, pageW - margin - 4, y + 11, { align: "right" });
-
-  // ── Notes ──
-  if (bill.notes) {
-    y += 28;
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(8.5);
-    doc.setTextColor(136, 146, 170);
-    doc.text(`Notes: ${bill.notes}`, margin, y);
-  }
-
-  // ── Footer ──
-  const footerY = doc.internal.pageSize.getHeight() - 16;
+  y += 6;
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(78, 88, 112);
-  doc.text("Transaction Verified. This is a system-generated payslip. No signature required.", margin, footerY);
-  doc.text(`Page 1 of 1`, pageW - margin, footerY, { align: "right" });
+  doc.setFontSize(9);
+  doc.setTextColor(80, 85, 100);
+  doc.text(`${bill.employee_name} (${bill.designation})`, margin, y);
+  doc.text(`Email: ${bill.email}`, margin, y + 5);
 
-  doc.save(`Bill_${bill.employee_name?.replace(/\s+/g, "_")}_${bill.bill_date}.pdf`);
+  y += 15;
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    head: [["Description", "Details", "Amount (₹)"]],
+    body: [
+      ["Basic Salary", `${bill.working_days} Days`, `₹ ${bill.monthly_salary?.toFixed(2)}`],
+      ["Attendance", `${bill.present_days} Present / ${bill.absent_days} Absent`, ""],
+      ["Deduction", `Per Day: ₹${(bill.monthly_salary / bill.working_days).toFixed(2)}`, `- ₹ ${bill.deduction?.toFixed(2)}`],
+    ],
+    styles: { fontSize: 9, cellPadding: 4 },
+    headStyles: { fillColor: [17, 19, 24], textColor: [255, 255, 255] },
+    theme: "striped"
+  });
+
+  y = doc.lastAutoTable.finalY + 10;
+  doc.setFillColor(79, 142, 247);
+  doc.rect(pageW - margin - 60, y, 60, 12, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.text("TOTAL PAYABLE", pageW - margin - 56, y + 7.5);
+  doc.text(`₹ ${bill.net_amount?.toFixed(2)}`, pageW - margin - 4, y + 7.5, { align: "right" });
+
+  const footerY = doc.internal.pageSize.getHeight() - 20;
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text("Modern Template Generated by BillFlow AI.", margin, footerY);
+}
+
+function renderProfessionalTemplate(doc, bill, company) {
+  const pageW = doc.internal.pageSize.getWidth();
+  const margin = 20;
+
+  // ── Borders ──
+  doc.setDrawColor(200, 200, 200);
+  doc.rect(5, 5, pageW - 10, doc.internal.pageSize.getHeight() - 10);
+
+  // ── Header ──
+  doc.setFont("times", "bold");
+  doc.setFontSize(24);
+  doc.setTextColor(30, 30, 30);
+  doc.text(company?.name || "OFFICIAL INVOICE", margin, 25);
+
+  doc.setFontSize(10);
+  doc.setFont("times", "normal");
+  doc.text(company?.address || "Business Location", margin, 35);
+  doc.text(`GSTIN: ${company?.gst_number || "N/A"}`, margin, 40);
+
+  doc.setLineWidth(0.5);
+  doc.line(margin, 45, pageW - margin, 45);
+
+  // ── Bill Info ──
+  doc.setFontSize(10);
+  doc.text(`Invoice Number: BS-${bill.id}`, pageW - margin, 25, { align: "right" });
+  doc.text(`Billing Date: ${bill.bill_date}`, pageW - margin, 31, { align: "right" });
+
+  // ── Tables ──
+  autoTable(doc, {
+    startY: 55,
+    margin: { left: margin, right: margin },
+    head: [["Service Description", "Unit Price", "Quantity", "Total"]],
+    body: [
+      [`Monthly Salary for ${bill.employee_name}`, `₹ ${bill.monthly_salary}`, "1 Month", `₹ ${bill.monthly_salary}`],
+      ["Less: Unpaid Absents", `₹ ${(bill.monthly_salary / bill.working_days).toFixed(2)}`, `${bill.absent_days} Days`, `-₹ ${bill.deduction}`],
+    ],
+    headStyles: { fillColor: [60, 60, 60] },
+    theme: "grid"
+  });
+
+  const finalY = doc.lastAutoTable.finalY + 10;
+  doc.setFont("times", "bold");
+  doc.text(`Net Amount Payable: ₹ ${bill.net_amount}`, pageW - margin, finalY, { align: "right" });
+
+  doc.setFont("times", "normal");
+  doc.text("Authorized Signature", pageW - margin - 40, finalY + 30);
+  doc.line(pageW - margin - 50, finalY + 25, pageW - margin, finalY + 25);
+
+  doc.setFontSize(8);
+  doc.text("This document is a formal record of payment and serves as a valid tax invoice.", pageW / 2, doc.internal.pageSize.getHeight() - 15, { align: "center" });
 }

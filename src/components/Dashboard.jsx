@@ -5,7 +5,7 @@
 import React from "react";
 import { Users, FileText, TrendingUp, AlertCircle } from "lucide-react";
 
-export default function Dashboard({ employees, bills }) {
+export default function Dashboard({ employees, bills, selectedCompany }) {
   const totalEmployees  = employees.length;
   const totalBills      = bills.length;
   const totalPaid       = bills.reduce((s, b) => s + b.amount, 0);
@@ -19,7 +19,7 @@ export default function Dashboard({ employees, bills }) {
   return (
     <div>
       <div className="section-heading">Dashboard</div>
-      <div className="section-sub">Company payroll overview at a glance</div>
+      <div className="section-sub">{selectedCompany?.name || "Company"} payroll overview at a glance</div>
 
       {/* Stat cards */}
       <div className="stats-grid">

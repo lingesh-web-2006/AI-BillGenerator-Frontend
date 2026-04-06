@@ -20,19 +20,26 @@ async function request(method, path, body = null) {
 // Employees
 export const api = {
   employees: {
-    getAll:  ()          => request("GET",    "/employees/"),
+    getAll:  (companyId) => request("GET",    `/employees/${companyId ? `?company_id=${companyId}` : ""}`),
     getOne:  (id)        => request("GET",    `/employees/${id}`),
     create:  (data)      => request("POST",   "/employees/", data),
     update:  (id, data)  => request("PUT",    `/employees/${id}`, data),
     remove:  (id)        => request("DELETE", `/employees/${id}`),
   },
   bills: {
-    getAll:       ()         => request("GET",  "/bills/"),
+    getAll:       (companyId) => request("GET",  `/bills/${companyId ? `?company_id=${companyId}` : ""}`),
     getOne:       (id)       => request("GET",  `/bills/${id}`),
     generate:     (data)     => request("POST", "/bills/generate", data),
     byEmployee:   (empId)    => request("GET",  `/bills/employee/${empId}`),
     remove:       (billId)   => request("DELETE", `/bills/${billId}`),
     clearAll:     ()         => request("DELETE", "/bills/"),
+  },
+  companies: {
+    getAll: ()         => request("GET",    "/companies/"),
+    getOne: (id)       => request("GET",    `/companies/${id}`),
+    create: (data)     => request("POST",   "/companies/", data),
+    update: (id, data) => request("PUT",    `/companies/${id}`, data),
+    remove: (id)       => request("DELETE", `/companies/${id}`),
   },
   voice: {
     process: (text) => request("POST", "/voice/process", { text }),

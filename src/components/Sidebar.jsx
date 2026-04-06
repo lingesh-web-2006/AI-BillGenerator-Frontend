@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { id: "dashboard",  label: "Dashboard",   icon: BarChart2  },
   { id: "voice",      label: "Voice Bills & Employees", icon: Mic        },
   { id: "bills",      label: "Bill History",icon: FileText   },
+  { id: "companies",  label: "Companies",   icon: Users      },
 ];
 
 export default function Sidebar({ active, onNavigate, onLogout }) {

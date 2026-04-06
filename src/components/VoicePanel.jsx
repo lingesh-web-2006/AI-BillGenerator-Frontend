@@ -11,7 +11,7 @@ import EmployeeTable from "./EmployeeTable";
 import AddEmployeeModal from "./AddEmployeeModal";
 import { Plus } from "lucide-react";
 
-export default function VoicePanel({ employees, loading, onBillGenerated, onEmployeeAdded }) {
+export default function VoicePanel({ employees, loading, selectedCompany, onBillGenerated, onEmployeeAdded }) {
   const { listening, transcript, error, supported, startListening, stopListening, clearTranscript } =
     useVoice();
 
@@ -58,7 +58,11 @@ export default function VoicePanel({ employees, loading, onBillGenerated, onEmpl
     setResult(null);
 
     try {
-      const data = await api.voice.process(text);
+      // Pass company_id so AI filters to this company's employees
+      const data = await api.voice.process({ 
+        text, 
+        company_id: selectedCompany?.id 
+      });
       setResult(data);
       onBillGenerated?.();
     } catch (err) {
@@ -80,7 +84,7 @@ export default function VoicePanel({ employees, loading, onBillGenerated, onEmpl
       <div className="flex items-center justify-between" style={{ marginBottom: "16px" }}>
         <div>
           <div className="section-heading">Employees</div>
-          <div className="section-sub" style={{ margin: 0 }}>Reference: Employee details</div>
+          <div className="section-sub" style={{ margin: 0 }}>Reference: {selectedCompany?.name} Roster</div>
         </div>
         <button 
           className="btn btn-primary" 
@@ -106,6 +110,7 @@ export default function VoicePanel({ employees, loading, onBillGenerated, onEmpl
 
       {showAddModal && (
         <AddEmployeeModal 
+          companyId={selectedCompany?.id}
           onClose={() => setShowAddModal(false)}
           onSuccess={() => {
             setShowAddModal(false);
@@ -256,7 +261,7 @@ export default function VoicePanel({ employees, loading, onBillGenerated, onEmpl
 
               {/* Dynamic Result Rendering */}
               {result.type === "bill" && (
-                <BillReceipt bill={result} onClose={handleReset} />
+                <BillReceipt bill={result} company={selectedCompany} onClose={handleReset} />
               )}
 
               {result.type === "bulk" && (

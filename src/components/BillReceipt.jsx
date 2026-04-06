@@ -93,7 +93,7 @@ export default function BillReceipt({ bill, onClose }) {
 
       {/* Actions */}
       <div className="flex gap-3" style={{ padding: "16px 24px", borderTop: "1px solid var(--border)" }}>
-        <button className="btn btn-primary" onClick={() => generateBillPDF(bill)}>
+        <button className="btn btn-primary" onClick={() => generateBillPDF(bill, company)}>
           <Download size={14} /> Download PDF
         </button>
         {onClose && (

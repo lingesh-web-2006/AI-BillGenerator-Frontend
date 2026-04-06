@@ -8,12 +8,23 @@ import { generateBillPDF } from "../utils/pdfGenerator";
 import { api } from "../utils/api";
 import ConfirmModal from "./ConfirmModal";
 
-export default function BillHistory({ bills, loading, onRefresh }) {
+export default function BillHistory({ bills, loading, onRefresh, selectedCompany }) {
   const [search, setSearch] = useState("");
   const [deleting, setDeleting] = useState(false);
   
   // Modal state
   const [modal, setModal] = useState({ open: false, type: "single", id: null });
+
+  // ... (no changes to handleRemove, openDeleteModal, filtered)
+
+  const handleDownload = (b) => {
+    generateBillPDF({
+      ...b,
+      bill_id: b.id,
+      net_amount: b.amount,
+      per_day_salary: b.monthly_salary / (b.working_days || 30),
+    }, selectedCompany);
+  };
 
   const handleRemove = async (id) => {
     try {
@@ -145,24 +156,7 @@ export default function BillHistory({ bills, loading, onRefresh }) {
                         <button
                           className="btn btn-ghost btn-sm"
                           title="Download PDF"
-                          onClick={() =>
-                            generateBillPDF({
-                              bill_id: b.id,
-                              employee_name: b.employee_name,
-                              designation: b.designation,
-                              email: b.email,
-                              monthly_salary: b.monthly_salary,
-                              working_days: b.working_days,
-                              present_days: b.present_days,
-                              absent_days: b.absent_days,
-                              per_day_salary: b.monthly_salary / (b.working_days || 30),
-                              deduction: b.deduction,
-                              net_amount: b.amount,
-                              bill_date: b.bill_date,
-                              generated_at: b.generated_at,
-                              notes: b.notes,
-                            })
-                          }
+                          onClick={() => handleDownload(b)}
                         >
                           <Download size={13} />
                         </button>

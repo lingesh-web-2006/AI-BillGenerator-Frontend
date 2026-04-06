@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { X, UserPlus } from "lucide-react";
 import { api } from "../utils/api";
 
-export default function AddEmployeeModal({ onClose, onSuccess }) {
+export default function AddEmployeeModal({ companyId, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState(null);
 
@@ -32,6 +32,7 @@ export default function AddEmployeeModal({ onClose, onSuccess }) {
     try {
       const payload = {
         ...form,
+        company_id: companyId,
         monthly_salary: parseFloat(form.monthly_salary),
         attendance_present: parseInt(form.attendance_present) || 0,
         attendance_absent: parseInt(form.attendance_absent) || 0,
