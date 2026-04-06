@@ -141,10 +141,10 @@ export default function BillReceipt({ bill, company, onClose }) {
               fontFamily: "var(--font-display)", fontSize: "1.2rem",
               fontWeight: 800, color: "#F1F5F9", letterSpacing: "0.03em",
             }}>
-              {(company?.name || "YOUR COMPANY NAME").toUpperCase()}
+              {(company?.name || "vips Tech").toUpperCase()}
             </div>
             <div style={{ fontSize: "0.72rem", color: "#64748B", marginTop: 4, lineHeight: 1.7 }}>
-              {company?.address || "123, Business Park, Tech City"}<br />
+              {company?.address || "redhills chennai 52"}<br />
               {company?.phone && `Ph: ${company.phone}`}
               {company?.phone && company?.email && " | "}
               {company?.email}

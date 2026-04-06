@@ -79,14 +79,14 @@ function renderGSTInvoice(doc, bill, company) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
   doc.setTextColor(...C.headerText);
-  doc.text((company?.name || "YOUR COMPANY NAME").toUpperCase(), ML + 2, 17);
+  doc.text((company?.name || "vips Tech").toUpperCase(), ML + 2, 17);
 
   // Tag line / address (left, small)
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(148, 163, 184); // slate-400
   const addressLine = [
-    company?.address || "123, Business Park, Tech City",
+    company?.address || "redhills chennai 52",
     company?.phone   ? `Ph: ${company.phone}` : null,
     company?.email   ? company.email          : null,
   ].filter(Boolean).join("   |   ");
