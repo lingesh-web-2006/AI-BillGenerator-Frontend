@@ -144,13 +144,13 @@ export default function BillReceipt({ bill, company, onClose }) {
               {(company?.name || "vips Tech").toUpperCase()}
             </div>
             <div style={{ fontSize: "0.72rem", color: "#64748B", marginTop: 4, lineHeight: 1.7 }}>
-              {company?.address || "redhills chennai 52"}<br />
+              {"redhills chennai 52"}<br />
               {company?.phone && `Ph: ${company.phone}`}
               {company?.phone && company?.email && " | "}
               {company?.email}
             </div>
             <div style={{ fontSize: "0.65rem", color: "#475569", marginTop: 4, fontFamily: "var(--font-mono)" }}>
-              GSTIN: {company?.gst_number || "27AABCU9603R1ZM"} &nbsp;|&nbsp; PAN: {company?.pan_number || "AABCU9603R"} &nbsp;|&nbsp; State: {company?.state || "Tamil Nadu (TN)"}
+              GSTIN: {company?.gst_number || "27AABCU9603R1ZM"} &nbsp;|&nbsp; PAN: {company?.pan_number || "AABCU9603R"} &nbsp;|&nbsp; State: { "Tamil Nadu (TN)"}
             </div>
           </div>
 
