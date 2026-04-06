@@ -379,12 +379,12 @@ export default function BillReceipt({ bill, company, onClose }) {
         position: "relative", zIndex: 1,
       }}>
         {[
-          ["Bank Name",  company?.bank_name    || "State Bank of India"],
-          ["A/C Number", company?.bank_account || "XXXX XXXX XXXX"],
+          ["Bank Name",  company?.bank_name    || " Bank of India"],
+          ["A/C Number", company?.bank_account || "876815986234"],
           ["IFSC Code",  company?.ifsc_code    || "SBIN0001234"],
           ["Branch",     company?.bank_branch  || "Main Branch"],
           ["A/C Type",   "Current Account"],
-          ["UPI ID",     company?.upi_id       || "company@upi"],
+          ["UPI ID",     company?.upi_id       || "comp235@upi"],
         ].map(([lbl, val], i) => (
           <div key={lbl} style={{
             padding: "12px 20px",
