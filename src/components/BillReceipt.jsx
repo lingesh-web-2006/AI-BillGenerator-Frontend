@@ -6,7 +6,7 @@ import React from "react";
 import { Download, CheckCircle } from "lucide-react";
 import { generateBillPDF } from "../utils/pdfGenerator";
 
-export default function BillReceipt({ bill, onClose }) {
+export default function BillReceipt({ bill, company, onClose }) {
   if (!bill) return null;
 
   const attendance = bill.working_days > 0
