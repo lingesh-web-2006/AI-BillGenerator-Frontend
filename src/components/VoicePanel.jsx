@@ -23,6 +23,16 @@ export default function VoicePanel({ employees, loading, selectedCompany, onBill
   const [error,       setError]       = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
+  const prevListeningRef = useRef(false);
+
+  // Auto-process when speech is finished
+  useEffect(() => {
+    if (prevListeningRef.current === true && listening === false && manualText.trim()) {
+      handleProcess();
+    }
+    prevListeningRef.current = listening;
+  }, [listening, manualText]);
+
   // Sync voice transcript to manualText
   useEffect(() => {
     if (transcript) setManualText(transcript);
@@ -163,7 +173,7 @@ export default function VoicePanel({ employees, loading, selectedCompany, onBill
                 <div className="assistant-avatar">
                   <Bot size={18} />
                 </div>
-                <span className="font-bold text-sm text-accent">Assistant Response</span>
+                <span className="font-bold text-sm text-accent">Strategic Intelligence Input</span>
               </div>
 
               {processing ? (

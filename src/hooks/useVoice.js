@@ -26,10 +26,10 @@ export function useVoice() {
     setTranscript("");
 
     const recognition = new SpeechRecognition();
-    recognition.lang              = "en-US";
+    recognition.lang              = "en-IN"; // Changed to handle Indian accents better as well
     recognition.interimResults    = true;
     recognition.maxAlternatives   = 1;
-    recognition.continuous        = true;
+    recognition.continuous        = false; // Stop after a single command
 
     recognition.onstart = () => setListening(true);
 
