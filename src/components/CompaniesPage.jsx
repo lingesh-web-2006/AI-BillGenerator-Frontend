@@ -8,7 +8,7 @@ import AddCompanyModal from "./AddCompanyModal";
 import { api } from "../utils/api";
 import ConfirmModal from "./ConfirmModal";
 
-export default function CompaniesPage({ companies, onChanged }) {
+export default function CompaniesPage({ companies, selectedCompanyId, onSelect, onChanged }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editCo, setEditCo] = useState(null);
   const [delCo, setDelCo] = useState(null);
@@ -28,8 +28,8 @@ export default function CompaniesPage({ companies, onChanged }) {
     <div className="companies-page fade-in">
       <div className="page-header">
         <div>
-          <h1 className="text-display">Companies</h1>
-          <p className="text-secondary">Manage your business profiles and invoice templates.</p>
+          <h1 className="section-heading">Companies</h1>
+          <p className="section-sub">Manage your business profiles and invoice templates.</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowAdd(true)}>
           <Plus size={16} /> Add Company
@@ -38,24 +38,36 @@ export default function CompaniesPage({ companies, onChanged }) {
 
       <div className="company-grid">
         {companies.map((co) => (
-          <div key={co.id} className="company-card card">
+          <div key={co.id} className={`company-card card ${co.id === selectedCompanyId ? 'active' : ''}`}>
             <div className="company-card-header">
               <div className="company-logo-circle">
                 {co.logo_url ? (
                   <img src={co.logo_url} alt={co.name} />
                 ) : (
-                  <Building2 size={24} color="var(--brand-primary)" />
+                  <Building2 size={28} color="var(--accent)" />
                 )}
               </div>
               <div style={{ flex: 1 }}>
-                <h3 className="text-display" style={{ fontSize: "1.1rem" }}>{co.name}</h3>
-                <span className="badge badge-blue">{co.template_name} Template</span>
+                <h3 className="text-display" style={{ fontSize: "1.15rem", marginBottom: "4px" }}>{co.name}</h3>
+                <div className="flex items-center gap-2">
+                  <span className="badge badge-blue">{co.template_name}</span>
+                  {co.id === selectedCompanyId && <span className="badge badge-green">Default</span>}
+                </div>
               </div>
               <div className="company-actions">
-                <button className="icon-btn" onClick={() => setEditCo(co)}>
+                {co.id !== selectedCompanyId && (
+                  <button 
+                    className="btn btn-ghost btn-sm" 
+                    onClick={() => onSelect(co.id)}
+                    style={{ padding: "4px 10px" }}
+                  >
+                    Switch
+                  </button>
+                )}
+                <button className="icon-btn" onClick={() => setEditCo(co)} title="Edit Profile">
                   <Edit2 size={14} />
                 </button>
-                <button className="icon-btn text-error" onClick={() => setDelCo(co)}>
+                <button className="icon-btn text-error" onClick={() => setDelCo(co)} title="Delete Profile">
                   <Trash2 size={14} />
                 </button>
               </div>

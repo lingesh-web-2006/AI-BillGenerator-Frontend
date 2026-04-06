@@ -42,7 +42,7 @@ export const api = {
     remove: (id)       => request("DELETE", `/companies/${id}`),
   },
   voice: {
-    process: (text) => request("POST", "/voice/process", { text }),
+    process: (data) => request("POST", "/voice/process", data),
   },
   auth: {
     login: (username, password) => request("POST", "/auth/login", { username, password }),

@@ -159,6 +159,8 @@ export default function App() {
           {page === "companies" && (
             <CompaniesPage 
               companies={companies} 
+              selectedCompanyId={selectedCompanyId}
+              onSelect={setSelectedCompanyId}
               onChanged={handleCompaniesChanged} 
             />
           )}

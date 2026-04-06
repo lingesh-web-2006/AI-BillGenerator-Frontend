@@ -73,30 +73,42 @@ export default function AddCompanyModal({ company, onClose, onSuccess }) {
         </div>
 
         <form onSubmit={handleSubmit} className="modal-body">
-          {error && <div className="alert alert-error mb-4">{error}</div>}
+          {error && <div className="alert alert-error mb-6">{error}</div>}
           
-          <div className="form-group">
-            <label>Company Name <span className="text-error">*</span></label>
-            <input 
-              type="text" 
-              placeholder="e.g. Acme Corporation" 
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
+          <div className="grid grid-2 gap-6 mb-6">
+            <div className="form-group">
+              <label>Company Name <span className="text-error">*</span></label>
+              <input 
+                type="text" 
+                placeholder="e.g. Acme Corporation" 
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Invoice Template</label>
+              <select 
+                value={formData.template_name}
+                onChange={(e) => setFormData({ ...formData, template_name: e.target.value })}
+              >
+                <option value="Modern">Modern (Steel Blue)</option>
+                <option value="Professional">Professional (Corporate)</option>
+              </select>
+            </div>
           </div>
 
-          <div className="form-group">
-            <label>Logo URL</label>
+          <div className="form-group mb-6">
+            <label>Logo URL (Direct link to image)</label>
             <input 
               type="url" 
-              placeholder="https://example.com/logo.png" 
+              placeholder="https://images.company.com/logo.png" 
               value={formData.logo_url}
               onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
             />
           </div>
 
-          <div className="grid grid-2 gap-4">
+          <div className="grid grid-2 gap-6 mb-6">
             <div className="form-group">
               <label>GST Number</label>
               <input 
@@ -117,34 +129,24 @@ export default function AddCompanyModal({ company, onClose, onSuccess }) {
             </div>
           </div>
 
-          <div className="form-group">
+          <div className="form-group mb-8">
             <label>Business Address</label>
             <textarea 
               rows={3} 
-              placeholder="123 Tech Park, Silicon Valley" 
+              placeholder="123 Tech Park, Suite 400, Silicon Valley" 
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              style={{ resize: "none" }}
             />
           </div>
 
-          <div className="form-group">
-            <label>Invoice Template</label>
-            <select 
-              value={formData.template_name}
-              onChange={(e) => setFormData({ ...formData, template_name: e.target.value })}
-            >
-              <option value="Modern">Modern (Futuristic Gray/Blue)</option>
-              <option value="Professional">Professional (Classic Corporate)</option>
-            </select>
-          </div>
-
-          <div className="modal-footer flex-end gap-3">
+          <div className="modal-footer flex items-center justify-between">
             <button type="button" className="btn btn-ghost" onClick={onClose} disabled={loading}>
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? "Saving..." : isEdit ? <Save size={16} /> : <PlusCircle size={16} />}
-              {isEdit ? "Save Profile" : "Create Profile"}
+              {loading ? "Saving Profile..." : isEdit ? "Update Company Profile" : "Register Company"}
+              {!loading && (isEdit ? <Save size={16} /> : <PlusCircle size={16} />)}
             </button>
           </div>
         </form>

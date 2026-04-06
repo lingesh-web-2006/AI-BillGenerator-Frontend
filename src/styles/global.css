@@ -7,44 +7,44 @@
 
 /* ── CSS Variables ── */
 :root {
-  --bg-base:       #030712;
-  --bg-surface:    #0B101E;
+  --bg-base:       #020617;
+  --bg-surface:    #0F172A;
   --bg-elevated:   rgba(30, 41, 59, 0.4);
-  --bg-card:       rgba(15, 23, 42, 0.65);
-  --bg-hover:      rgba(51, 65, 85, 0.5);
+  --bg-card:       rgba(15, 23, 42, 0.7);
+  --bg-hover:      rgba(30, 41, 59, 0.8);
 
-  --border:        rgba(148, 163, 184, 0.1);
+  --border:        rgba(148, 163, 184, 0.15);
   --border-light:  rgba(148, 163, 184, 0.25);
+  --border-brand:  rgba(99, 102, 241, 0.5);
 
-  --text-primary:  #F8FAFC;
+  --text-primary:  #F1F5F9;
   --text-secondary:#94A3B8;
-  --text-muted:    #64748B;
+  --text-muted:    #475569;
 
   --accent:        #6366F1;
   --accent-light:  #818CF8;
-  --accent-dim:    rgba(99, 102, 241, 0.15);
-  --accent-glow:   rgba(99, 102, 241, 0.35);
+  --accent-dim:    rgba(99, 102, 241, 0.1);
+  --accent-glow:   rgba(99, 102, 241, 0.25);
 
-  --success:       #10B981;
-  --success-dim:   rgba(16, 185, 129, 0.15);
-  --warning:       #F59E0B;
-  --warning-dim:   rgba(245, 158, 11, 0.15);
-  --danger:        #EF4444;
-  --danger-dim:    rgba(239, 68, 68, 0.15);
+  --success:       #2DD4BF;
+  --success-dim:   rgba(45, 212, 191, 0.1);
+  --warning:       #FB7185; /* Rose for a more premium warning vibe */
+  --warning-dim:   rgba(251, 113, 133, 0.1);
+  --danger:        #F43F5E;
+  --danger-dim:    rgba(244, 63, 94, 0.1);
 
-  --font-display:  'Plus Jakarta Sans', sans-serif;
-  --font-body:     'Inter', sans-serif;
+  --font-display:  'Plus Jakarta Sans', var(--font-body);
+  --font-body:     'Inter', -apple-system, sans-serif;
   --font-mono:     'JetBrains Mono', monospace;
 
-  --radius-sm:     8px;
-  --radius-md:     12px;
-  --radius-lg:     16px;
-  --radius-xl:     24px;
+  --radius-sm:     10px;
+  --radius-md:     14px;
+  --radius-lg:     20px;
+  --radius-xl:     32px;
 
-  --shadow-sm:     0 2px 4px rgba(0,0,0,0.5);
-  --shadow-md:     0 8px 24px rgba(0,0,0,0.6);
-  --shadow-lg:     0 16px 48px rgba(0,0,0,0.8);
-  --shadow-accent: 0 0 24px var(--accent-glow);
+  --shadow-sm:     0 1px 3px rgba(0,0,0,0.1);
+  --shadow-md:     0 10px 30px -5px rgba(0,0,0,0.3);
+  --shadow-lg:     0 20px 50px -12px rgba(0,0,0,0.5);
 }
 
 /* ── Reset & Base ── */
@@ -196,38 +196,29 @@ body {
 /* ── Cards ── */
 .card {
   background: var(--bg-card);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 28px;
+  box-shadow: var(--shadow-md);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+  border-color: var(--border-light);
+  box-shadow: var(--shadow-lg);
 }
 
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.card-title {
+.text-display {
   font-family: var(--font-display);
-  font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: 0.01em;
 }
 
-.card-subtitle {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  margin-top: 2px;
+.text-secondary {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
 }
 
 /* ── Stat Cards ── */
@@ -760,26 +751,47 @@ tbody td {
 /* ── Companies Page ── */
 .company-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
-  margin-top: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 28px;
+  margin-top: 32px;
 }
 
 .company-card {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  padding: 32px;
+  gap: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.company-card.active {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-accent);
+}
+
+.company-card.active::after {
+  content: "ACTIVE PROFILE";
+  position: absolute;
+  top: 12px; right: -30px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 4px 40px;
+  transform: rotate(45deg);
+  letter-spacing: 0.05em;
 }
 
 .company-card-header {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
 }
 
 .company-logo-circle {
-  width: 52px;
-  height: 52px;
+  width: 64px;
+  height: 64px;
   border-radius: var(--radius-md);
   background: var(--bg-elevated);
   border: 1px solid var(--border);
@@ -787,18 +799,66 @@ tbody td {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.company-card:hover .company-logo-circle {
+  transform: scale(1.1);
+  border-color: var(--accent);
 }
 
 .company-logo-circle img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding: 4px;
+  object-fit: cover;
 }
 
 .company-actions {
   display: flex;
   gap: 8px;
+  margin-left: auto;
+}
+
+.detail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+.detail-item svg {
+  margin-top: 3px;
+  color: var(--accent);
+  opacity: 0.7;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+.icon-btn.text-error:hover {
+  background: var(--danger-dim);
+  color: var(--danger);
+  border-color: var(--danger);
 }
 
 .company-details {
