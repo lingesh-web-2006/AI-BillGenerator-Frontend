@@ -95,7 +95,7 @@ function renderGSTInvoice(doc, bill, company) {
   // GST & PAN (left)
   doc.setFontSize(7.5);
   doc.text(
-    `GSTIN: ${company?.gst_number || "27AABCU9603R1ZM"}   |   PAN: ${company?.pan_number || "AABCU9603R"}   |   State: ${company?.state || "Maharashtra (27)"}`,
+    `GSTIN: ${company?.gst_number || "27AABCU9603R1ZM"}   |   PAN: ${company?.pan_number || "AABCU9603R"}   |   State: ${company?.state || "Tamil Nadu (TN)"}`,
     ML + 2, 30
   );
 
@@ -374,11 +374,12 @@ function renderGSTInvoice(doc, bill, company) {
   doc.text("BANK DETAILS", bankX + 5, y + 7);
 
   const bankLines = [
-    [`Bank Name:`,    company?.bank_name    || "State Bank of India"],
-    [`A/C No:`,       company?.bank_account || "123456789012"],
+    [`Bank Name:`,    company?.bank_name    || "Bank of India"],
+    [`A/C No:`,       company?.bank_account || "876815986234"],
     [`IFSC:`,         company?.ifsc_code    || "SBIN0001234"],
     [`Branch:`,       company?.bank_branch  || "Main Branch"],
     [`A/C Type:`,     "Current Account"],
+    [`UPI ID:`,       company?.upi_id       || "comp235@upi"],
   ];
   bankLines.forEach(([lbl, val], i) => {
     doc.setFont("helvetica", "bold");
