@@ -77,21 +77,28 @@ export default function BillReceipt({ bill, company, onClose }) {
   if (!bill) return null;
 
   const {
-    perDayRate, earnedSalary, deduction,
-    cgstAmt, sgstAmt, totalGST, subtotal, netPayable, attendance,
+    perDayRate, grossSalary, deduction,
+    cgstAmt, sgstAmt, totalGST, subtotal, netPayable, attendance, bonusAmt
   } = useMemo(() => {
     const grossSalary  = bill.monthly_salary || 0;
     const perDayRate   = bill.per_day_salary || (grossSalary / (bill.working_days || 30));
-    const earnedSalary = perDayRate * (bill.present_days || 0);
-    const deduction    = bill.deduction || (perDayRate * (bill.absent_days || 0));
-    const subtotal     = earnedSalary;
+    const deduction    = typeof bill.deduction === 'number' ? bill.deduction : (perDayRate * (bill.absent_days || 0));
+    
+    const subtotal     = grossSalary - deduction;
+    const bonusAmt     = bill.bonus || 0;
+
     const cgstAmt      = subtotal * CGST_RATE;
     const sgstAmt      = subtotal * SGST_RATE;
     const totalGST     = cgstAmt + sgstAmt;
-    const netPayable   = bill.net_amount ?? (subtotal + totalGST - deduction);
+    
+    // Use the backend's actual stored amount. 
+    // Wait, the previously stored amounts don't have GST added to them.
+    // Net Payable: subtotal + bonus
+    const netPayable   = bill.amount ?? bill.net_amount ?? (subtotal + bonusAmt);
+    
     const attendance   = bill.working_days > 0
       ? ((bill.present_days / bill.working_days) * 100).toFixed(1) : 0;
-    return { perDayRate, earnedSalary, deduction, cgstAmt, sgstAmt, totalGST, subtotal, netPayable, attendance };
+    return { perDayRate, grossSalary, deduction, cgstAmt, sgstAmt, totalGST, subtotal, netPayable, attendance, bonusAmt };
   }, [bill]);
 
   const invNo = `INV-${String(bill.bill_id || bill.id || 1).padStart(5, "0")}`;
@@ -255,13 +262,17 @@ export default function BillReceipt({ bill, company, onClose }) {
             <tr style={{ borderBottom: "1px solid var(--border)" }}>
               <td style={{ textAlign: "center", padding: "12px 16px", color: "var(--text-muted)" }}>01</td>
               <td style={{ padding: "12px 16px" }}>
-                <div style={{ fontWeight: 600 }}>Professional Employment Services</div>
+                <div style={{ fontWeight: 600 }}>
+                  {bill.notes && bill.notes.trim() !== "" && !bill.notes.startsWith("Reverse") && !bill.notes.startsWith("None")
+                    ? bill.notes.charAt(0).toUpperCase() + bill.notes.slice(1)
+                    : "Professional Employment Services"}
+                </div>
                 <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>{bill.designation || "Staff"} – Salary for {period}</div>
               </td>
               <td style={{ textAlign: "center", padding: "12px 16px", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>998511</td>
-              <td style={{ textAlign: "right", padding: "12px 16px", fontFamily: "var(--font-mono)" }}>₹ {fmt(perDayRate)}</td>
-              <td style={{ textAlign: "center", padding: "12px 16px", fontFamily: "var(--font-mono)" }}>{bill.present_days || 0}</td>
-              <td style={{ textAlign: "right", padding: "12px 16px", fontFamily: "var(--font-mono)", fontWeight: 700 }}>₹ {fmt(earnedSalary)}</td>
+              <td style={{ textAlign: "right", padding: "12px 16px", fontFamily: "var(--font-mono)" }}>₹ {fmt(grossSalary)}</td>
+              <td style={{ textAlign: "center", padding: "12px 16px", fontFamily: "var(--font-mono)" }}>{bill.working_days || 30}</td>
+              <td style={{ textAlign: "right", padding: "12px 16px", fontFamily: "var(--font-mono)", fontWeight: 700 }}>₹ {fmt(grossSalary)}</td>
             </tr>
             <tr style={{ borderBottom: "1px solid var(--border)", background: "rgba(244,63,94,0.03)" }}>
               <td style={{ textAlign: "center", padding: "12px 16px", color: "var(--text-muted)" }}>02</td>
@@ -274,6 +285,21 @@ export default function BillReceipt({ bill, company, onClose }) {
               <td style={{ textAlign: "center", padding: "12px 16px", fontFamily: "var(--font-mono)", color: "var(--danger)" }}>({bill.absent_days || 0})</td>
               <td style={{ textAlign: "right", padding: "12px 16px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--danger)" }}>- ₹ {fmt(deduction)}</td>
             </tr>
+            {bonusAmt !== 0 && (
+              <tr style={{ borderBottom: "1px solid var(--border)", background: "rgba(34,197,94,0.03)" }}>
+                <td style={{ textAlign: "center", padding: "12px 16px", color: "var(--text-muted)" }}>03</td>
+                <td style={{ padding: "12px 16px" }}>
+                  <div style={{ fontWeight: 600, color: "var(--success)" }}>Bonus / Adjustment</div>
+                  <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Additional component</div>
+                </td>
+                <td style={{ textAlign: "center", padding: "12px 16px", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>-</td>
+                <td style={{ textAlign: "right", padding: "12px 16px", fontFamily: "var(--font-mono)" }}>-</td>
+                <td style={{ textAlign: "center", padding: "12px 16px", fontFamily: "var(--font-mono)", color: "var(--success)" }}>-</td>
+                <td style={{ textAlign: "right", padding: "12px 16px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--success)" }}>
+                  {bonusAmt > 0 ? "+" : "-"} ₹ {fmt(Math.abs(bonusAmt))}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -301,9 +327,9 @@ export default function BillReceipt({ bill, company, onClose }) {
         <div style={{ padding: "16px 24px" }}>
           {[
             { label: "Subtotal (Earned Salary)", value: `₹ ${fmt(subtotal)}` },
-            { label: `CGST @ 9% (SAC 998511)`,  value: `₹ ${fmt(cgstAmt)}`, accent: true },
-            { label: `SGST @ 9% (SAC 998511)`,  value: `₹ ${fmt(sgstAmt)}`, accent: true },
-            { label: "Deductions",               value: `- ₹ ${fmt(deduction)}`, danger: true },
+            { label: `CGST @ 9% (Informational)`,  value: `₹ ${fmt(cgstAmt)}`, accent: false },
+            { label: `SGST @ 9% (Informational)`,  value: `₹ ${fmt(sgstAmt)}`, accent: false },
+            ...(bonusAmt ? [{ label: "Bonus Amount", value: `${bonusAmt > 0 ? '+' : '-'} ₹ ${fmt(Math.abs(bonusAmt))}`, accent: true }] : []),
           ].map(({ label, value, accent, danger }) => (
             <div key={label} style={{
               display: "flex", justifyContent: "space-between",
@@ -361,7 +387,11 @@ export default function BillReceipt({ bill, company, onClose }) {
           <tbody>
             <tr style={{ background: "rgba(99,102,241,0.04)", borderBottom: "1px solid var(--border)" }}>
               <td style={{ textAlign: "center", padding: "10px 14px", fontFamily: "var(--font-mono)", fontWeight: 600 }}>998511</td>
-              <td style={{ textAlign: "center", padding: "10px 14px", color: "var(--text-secondary)" }}>Employment & Payroll Services</td>
+              <td style={{ textAlign: "center", padding: "10px 14px", color: "var(--text-secondary)" }}>
+                {bill.notes && bill.notes.trim() !== "" && !bill.notes.startsWith("Reverse") && !bill.notes.startsWith("None")
+                  ? bill.notes.charAt(0).toUpperCase() + bill.notes.slice(1)
+                  : "Employment & Payroll Services"}
+              </td>
               <td style={{ textAlign: "center", padding: "10px 14px", fontFamily: "var(--font-mono)" }}>₹ {fmt(subtotal)}</td>
               <td style={{ textAlign: "center", padding: "10px 14px", fontFamily: "var(--font-mono)", color: "var(--accent)" }}>₹ {fmt(cgstAmt)}</td>
               <td style={{ textAlign: "center", padding: "10px 14px", fontFamily: "var(--font-mono)", color: "var(--accent)" }}>₹ {fmt(sgstAmt)}</td>
